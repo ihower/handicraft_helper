@@ -4,7 +4,11 @@ module Handicraft
   unless const_defined? :SITE_NAME
     SITE_NAME = "undefined"
   end
-    
+  
+  def yield_or_default(message, default_message = "")
+     message.nil? ? default_message : message
+  end
+  
   def breadcrumb( *crumb )
     p = TagNode.new( :p, :class => "breadcrumb" )
     p << crumb.join(' &gt; ')
