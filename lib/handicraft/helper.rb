@@ -9,6 +9,13 @@ module Handicraft
      message.nil? ? default_message : message
   end
   
+  def handicraft_form_for(name, *args, &block)
+    options = args.last.is_a?(Hash) ? args.pop : {}
+    options = options.merge(:builder => Handicraft::Form)
+    args = (args << options)
+    form_for(name, *args, &block)
+  end
+  
   def breadcrumb( *crumb )
     p = TagNode.new( :p, :class => "breadcrumb" )
     p << crumb.join(' &gt; ')
