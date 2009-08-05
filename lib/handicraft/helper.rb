@@ -1,10 +1,6 @@
 module Handicraft
   module Helper
-  
-  unless const_defined? :SITE_NAME
-    SITE_NAME = "undefined"
-  end
-  
+    
   def yield_or_default(message, default_message = "")
      message.nil? ? default_message : message
   end
@@ -28,13 +24,16 @@ module Handicraft
   end
   
   def render_body_tag
-    tag_class ="#{controller_name}-controller #{action_name}-action"
+    class_attribute = ["#{controller_name}-controller","#{action_name}-action"].join(" ")
+    id_attribute = (@body_id)? " id=\"#{@body_id}-page\"" : ""
     
-    if @body_id
-      %Q{<body id="#{@body_id}-page" class="#{tag_class}">}
-    else
-      %Q{<body class="#{tag_class}">}
-    end
+    %Q|<!--[if lt IE 7 ]>
+<body class="#{class_attribute} ie6"><![endif]-->
+<!--[if gte IE 7 ]>
+<body class="#{class_attribute} ie"><![endif]-->
+<!--[if !IE]>-->
+<body#{id_attribute} class="#{class_attribute}">
+<!--<![endif]-->|
   end
   
   def s(html)
@@ -86,65 +85,35 @@ module Handicraft
     return table.to_s
   end
 
-  # Handicraft Helpers
-  # menu can have submenus. You can also give 
-  # menu = Menu.new({:id => "nav", :class => "blah"})
-  # menu << [ "Home" , { :controller => "home" }, { :id => "home " } ]
-  # if logged_in?
-  #   menu << [ "A" , { :controller => "a" } ]
-  #   menu << [ "B" , { :controller => "b" } ]
-  #   sub_menu = Menu.new
-  #     sub_menu << [ "C" , { :controller => "c", :action => "cc" } ]
-  #   menu << sub_menu
-  # else
-  #   menu << [ "D" , { :controller => "d" } ]
-  #   menu << [ "E" , { :controller => "e" ]
-  # end
-  # return menu
-
-  class Menu < Array
-    attr_accessor :css_id
-    attr_accessor :css_class
-    attr_accessor :title
-
-    def initialize(options={})
-      @css_id = options[:id]
-      @css_class = options[:class]
+  def render_list(list=[], options={})
+    if list.is_a? Hash
+      options = list
+      list = []
     end
-
-  end
-  
-  def render_menu(menu, options={})
-    menu_id = menu.css_id ? menu.css_id : nil
-    menu_class = "menu" + (menu.css_class ? " #{menu.css_class}" : "")
     
-    ul = TagNode.new('ul', :id => menu_id, :class => menu_class )
+    yield(list) if block_given?
     
-    menu.each_with_index do |item, i|       
-      item_class = "first" if i == 0
-      item_class = "last" if i == (menu.length - 1)
+    ul = TagNode.new('ul', :id => options[:id], :class => options[:class] )
+    
+    list.each_with_index do |content, i|
+      item_class = []
+      item_class << "first" if i == 0
+      item_class << "last" if i == (list.length - 1)
 
-      if item.class == Array 
-        if url_for( :controller => controller.controller_name, :action => controller.action_name, :only_path => true) == item[1] || ( @highlight && @highlight.include?(item[1]) )
-        item_class = "#{item_class} selected"
-        end
+      link = content.match(/href=['"](.*)['"]/)[1] rescue nil
+      
+      if ( link && current_page?(link) ) || ( @current && @current.include?(link) )
+        item_class << "current"
       end
       
-      ul << li = TagNode.new('li', :class => item_class)
-      
-      if item.class == Array
-        li << link_to(item[0], item[1], item[2])
-      elsif item.class == String
-        li << "<p>#{item}</p>"
-      elsif item.class == Menu
-        li << link_to(item.title[0], h(item.title[1]), item.title[2])
-        li << render_menu(item)
-      end
+      item_class = (item_class.empty?)? nil : item_class.join(" ")
+      ul << li = TagNode.new('li', :class => item_class )
+      li << content      
     end
     
     return ul.to_s
   end
-
+  
   # Composite pattern
   class TagNode
     include ActionView::Helpers::TagHelper
