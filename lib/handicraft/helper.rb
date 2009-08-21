@@ -8,6 +8,13 @@ module Handicraft
   def handicraft_form_for(name, *args, &block)
     options = args.last.is_a?(Hash) ? args.pop : {}
     options = options.merge(:builder => Handicraft::Form)
+    
+    if options[:html] && options[:html][:class].nil?
+       options[:html].merge!( :class => "form right-label" )
+    elsif options[:html].nil?
+       options[:html] = { :class => "form right-label" }
+    end
+    
     args = (args << options)
     form_for(name, *args, &block)
   end
@@ -85,6 +92,8 @@ module Handicraft
     return table.to_s
   end
 
+  # .current will be added to current action, but if you want to add .current to another link, you can set @current = ['/other_link'] 
+  # TODO: hot about render_list( *args )
   def render_list(list=[], options={})
     if list.is_a? Hash
       options = list
@@ -100,7 +109,7 @@ module Handicraft
       item_class << "first" if i == 0
       item_class << "last" if i == (list.length - 1)
 
-      link = content.match(/href=['"](.*)['"]/)[1] rescue nil
+      link = content.match(/href=(["'])(.*?)(\1)/)[2] rescue nil
       
       if ( link && current_page?(link) ) || ( @current && @current.include?(link) )
         item_class << "current"
@@ -113,7 +122,7 @@ module Handicraft
     
     return ul.to_s
   end
-  
+
   # Composite pattern
   class TagNode
     include ActionView::Helpers::TagHelper
