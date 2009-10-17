@@ -44,6 +44,23 @@ module Handicraft
       end
     end
   
+    def many_check_boxes(name, check_boxes_options, options = {})
+      li =  Handicraft::Helper::TagNode.new("li")
+      li << label(name, options.delete(:label) , :class => "desc" ) if options[:label]
+      
+      div = Handicraft::Helper::TagNode.new("div", :class=> "col")
+      
+      field_name = "#{object_name}[#{name}][]"
+      check_boxes_options.each do |value, key|
+        div << @template.check_box_tag(field_name, key, object.send(name).include?(key)) + " #{value} "
+      end
+      
+      div << @template.hidden_field_tag(field_name, "")
+      li << div
+      
+      return li.to_s
+    end
+      
     def submit(value, options={})
       options[:class] ||= 'submit'
       
