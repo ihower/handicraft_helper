@@ -109,7 +109,19 @@ module Handicraft
       item_class << "first" if i == 0
       item_class << "last" if i == (list.length - 1)
 
-      link = content.match(/href=(["'])(.*?)(\1)/)[2] rescue nil
+      item_content = content
+      item_options = {}
+
+      if content.is_a? Array
+        item_content = content[0]
+        item_options = content[1]
+      end
+
+      if item_options[:class]
+        item_class << item_options[:class]
+      end
+
+      link = item_content.match(/href=(["'])(.*?)(\1)/)[2] rescue nil
       
       if ( link && current_page?(link) ) || ( @current && @current.include?(link) )
         item_class << "current"
@@ -117,7 +129,7 @@ module Handicraft
       
       item_class = (item_class.empty?)? nil : item_class.join(" ")
       ul << li = TagNode.new('li', :class => item_class )
-      li << content      
+      li << item_content
     end
     
     return ul.to_s
